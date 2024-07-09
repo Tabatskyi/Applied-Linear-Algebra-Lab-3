@@ -37,9 +37,10 @@ file_path = 'ratings-small.csv'
 df = pd.read_csv(file_path)
 
 ratings_matrix = df.pivot(index='userId', columns='movieId', values='rating')
+print(ratings_matrix)
 
-ratings_matrix = ratings_matrix.dropna(thresh=200, axis=0)
-ratings_matrix = ratings_matrix.dropna(thresh=100, axis=1)
+ratings_matrix = ratings_matrix.dropna(thresh=10, axis=0)
+ratings_matrix = ratings_matrix.dropna(thresh=20, axis=1)
 
 ratings_matrix_filled = ratings_matrix.fillna(2.5)
 R = ratings_matrix_filled.values
@@ -47,17 +48,21 @@ user_ratings_mean = np.mean(R, axis=1)
 R_demeaned = R - user_ratings_mean.reshape(-1, 1)
 
 U, sigma, Vt = svds(R_demeaned, k=3)
-V = np.array(Vt).T
-print(U)
+U = np.array(U)
+sigma = np.diag(sigma)
+Vt = np.array(Vt)
+V = Vt.T
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.scatter(U[:20, 0], U[:20, 1], U[:20, 2])
 plt.show()
 
-print(V)
-
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-ax.scatter(V[:, 0], V[:, 1], V[:, 2])
+ax.scatter(V[:20, 0], V[:20, 1], V[:20, 2])
 plt.show()
+
+all_user_predicted_ratings = np.dot(np.dot(U, sigma), Vt) + user_ratings_mean.reshape(-1, 1)
+preds_df = pd.DataFrame(all_user_predicted_ratings, columns=ratings_matrix.columns, index=ratings_matrix.index)
+print(preds_df)
