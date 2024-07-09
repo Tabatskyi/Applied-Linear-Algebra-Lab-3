@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from scipy.sparse.linalg import svds
+from matplotlib import pyplot as plt
 
 
 def what_a_sigma(matrix):
@@ -28,6 +29,35 @@ def what_a_sigma(matrix):
 
 
 random_matrix = np.array(np.random.rand(10, 5))
-U, sigma, Vt = what_a_sigma(random_matrix)
-print(random_matrix)
-print(U, sigma, Vt)
+# U, sigma, Vt = what_a_sigma(random_matrix)
+# print(random_matrix)
+# print(U, sigma, Vt)
+
+file_path = 'ratings-small.csv'
+df = pd.read_csv(file_path)
+
+ratings_matrix = df.pivot(index='userId', columns='movieId', values='rating')
+
+ratings_matrix = ratings_matrix.dropna(thresh=200, axis=0)
+ratings_matrix = ratings_matrix.dropna(thresh=100, axis=1)
+
+ratings_matrix_filled = ratings_matrix.fillna(2.5)
+R = ratings_matrix_filled.values
+user_ratings_mean = np.mean(R, axis=1)
+R_demeaned = R - user_ratings_mean.reshape(-1, 1)
+
+U, sigma, Vt = svds(R_demeaned, k=3)
+V = np.array(Vt).T
+print(U)
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(U[:20, 0], U[:20, 1], U[:20, 2])
+plt.show()
+
+print(V)
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(V[:, 0], V[:, 1], V[:, 2])
+plt.show()
